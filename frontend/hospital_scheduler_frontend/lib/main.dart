@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hospital_scheduler_frontend/app_state.dart';
 import 'package:hospital_scheduler_frontend/setup_page';
+import 'package:hospital_scheduler_frontend/submit_tasks_page.dart';
 
 void main() {
   runApp(const MainApp());
@@ -36,7 +37,7 @@ class _MainAppState extends State<MainApp> {
             child: Center(
               child: TabBarView(children: [
                 SetupPage(),
-                Text('Hello WorldB!'),
+                SubmitTasksPage(),
                 Text('Hello WorldC!'),
               ]),
             ),
