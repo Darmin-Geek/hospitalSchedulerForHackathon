@@ -61,6 +61,8 @@ def schedule():
             for nurse in data['nurses']:
                 for time in range(0, 48*60, TIME_INTERVAL):
                     variables[(task['id'], task_instance, nurse['id'], time)] = model.NewBoolVar(f'x_{task["id"]}_{task_instance}_{nurse["id"]}_{time}')
+                    if(time < task['earliest_start_time']):
+                        model.Add(variables[(task['id'], task_instance, nurse['id'], time)] == 0)
 
     # Each task instance must be completed exactly once
     for task in data['tasks']:
