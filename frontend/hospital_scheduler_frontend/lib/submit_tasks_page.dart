@@ -12,7 +12,7 @@ class SubmitTasksPage extends StatefulWidget {
 class _SubmitTasksPageState extends State<SubmitTasksPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _durationController = TextEditingController();
+
   final _numberOfTimesController = TextEditingController();
   final _minSeparationController = TextEditingController();
   final _maxSeparationController = TextEditingController();
@@ -23,7 +23,7 @@ class _SubmitTasksPageState extends State<SubmitTasksPage> {
   @override
   void dispose() {
     _nameController.dispose();
-    _durationController.dispose();
+
     _numberOfTimesController.dispose();
     _minSeparationController.dispose();
     _maxSeparationController.dispose();
@@ -61,7 +61,6 @@ class _SubmitTasksPageState extends State<SubmitTasksPage> {
 
       context.read<AppStateCubit>().addTask(
         _nameController.text,
-        int.parse(_durationController.text),
         _selectedPatient!.id,
         int.parse(_numberOfTimesController.text),
         int.parse(_minSeparationController.text),
@@ -76,7 +75,6 @@ class _SubmitTasksPageState extends State<SubmitTasksPage> {
       // Clear form
       _formKey.currentState!.reset();
       _nameController.clear();
-      _durationController.clear();
       _numberOfTimesController.clear();
       _minSeparationController.clear();
       _maxSeparationController.clear();
@@ -109,20 +107,7 @@ class _SubmitTasksPageState extends State<SubmitTasksPage> {
                   return null;
                 },
               ),
-              TextFormField(
-                controller: _durationController,
-                decoration: const InputDecoration(labelText: 'Duration (minutes)'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter duration';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
-                  return null;
-                },
-              ),
+
               BlocBuilder<AppStateCubit, AppState>(
                 builder: (context, state) {
                   return DropdownButtonFormField<Patient>(

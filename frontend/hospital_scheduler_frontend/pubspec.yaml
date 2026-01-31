@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  http: ^1.6.0
   syncfusion_flutter_calendar: ^29.1.38
 
 dev_dependencies:

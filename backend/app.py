@@ -31,7 +31,6 @@ def schedule():
     #         {
     #             "id": 1,
     #             "name": "Check vitals",
-    #             "duration": 15,
     #             "patient_id": 1,
     #             "number_of_times": 3,
     #             "minimum_separation": 40,

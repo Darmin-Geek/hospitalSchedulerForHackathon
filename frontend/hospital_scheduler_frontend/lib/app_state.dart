@@ -1,6 +1,7 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+
 class Nurse {
   int id;
   String name;
@@ -18,7 +19,7 @@ class Patient {
 class Task {
   int id;
   String name;
-  int duration;
+
   int patient_id;
   int number_of_times;
   int minimum_separation;
@@ -28,7 +29,7 @@ class Task {
   Task({
     required this.id,
     required this.name,
-    required this.duration,
+
     required this.patient_id,
     required this.number_of_times,
     required this.minimum_separation,
@@ -62,8 +63,8 @@ class AppStateCubit extends Cubit<AppState> {
     emit(state);
   }
 
-  void addTask(String name, int duration, int patientId, int numberOfTimes, int minimumSeparation, int maximumSeparation, int earliestStartTime) {
-    state.tasks.add(Task(id: state.taskNextId, name: name, duration: duration, patient_id: patientId, number_of_times: numberOfTimes, minimum_separation: minimumSeparation, maximum_separation: maximumSeparation, earliest_start_time: earliestStartTime));
+  void addTask(String name, int patientId, int numberOfTimes, int minimumSeparation, int maximumSeparation, int earliestStartTime) {
+    state.tasks.add(Task(id: state.taskNextId, name: name, patient_id: patientId, number_of_times: numberOfTimes, minimum_separation: minimumSeparation, maximum_separation: maximumSeparation, earliest_start_time: earliestStartTime));
     state.taskNextId++;
     emit(state);
   }
