@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hospital_scheduler_frontend/app_state.dart';
-import 'package:hospital_scheduler_frontend/setup_page';
+import 'package:hospital_scheduler_frontend/setup_page.dart';
 import 'package:hospital_scheduler_frontend/submit_tasks_page.dart';
 
 void main() {

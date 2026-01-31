@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
 
 class Nurse {
   int id;
@@ -172,6 +175,13 @@ class AppStateCubit extends Cubit<AppState> {
         maximum_separation: maximumSeparation,
         earliest_start_time: earliestStartTime));
     state.taskNextId++;
+    emit(state);
+    getUpdatedSchedule();
+  }
+
+  void getUpdatedSchedule() async {
+    var response  = await http.post(Uri.parse('http://localhost:5000/schedule'), body: jsonEncode(state.toJson()), headers: {'Content-Type': 'application/json'});
+    state.events = (jsonDecode(response.body) as List).map((e) => Event.fromJson(e)).toSet();
     emit(state);
   }
 
