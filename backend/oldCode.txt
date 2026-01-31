@@ -1,0 +1,35 @@
+solver = pywraplp.Solver.CreateSolver('GLOP')
+    if not solver:
+        return 'No solver found'
+
+# First int is the task id, the second is the task instance id, third int is nurse id
+    variables : dict[(int, int, int), pywraplp.Variable] = {}
+
+#Each variable is the timestamp (starting at 12am=0) of that task instance being started by that nurse.abs
+#The schedule is for 48 hours    
+    for task in data['tasks']:
+        for task_instance in range(task['number_of_times']):
+            for nurse in data['nurses']:
+                variables[(task['id'], task_instance, nurse['id'])] = solver.NumVar(0, 48*60, f'x_{task["id"]}_{task_instance}_{nurse["id"]}')
+    
+    # Each task instance must be completed exactly once
+    for task in data['tasks']:
+        for task_instance in range(task['number_of_times']):
+            solver.Add(solver.Sum([variables[(task['id'], task_instance, nurse['id'])] for nurse in data['nurses']]) == 1)
+
+    # Each nurse can only do one task at a time
+    for nurse in data['nurses']:
+        for task in data['tasks']:
+            for task_instance in range(task['number_of_times']):
+                for task2 in data['tasks']:
+                    for task2_instance in range(task2['number_of_times']):
+                        if task['id'] != task2['id'] or task_instance != task2_instance:
+# The difference between the start times of two tasks must be at least the duration of the first task
+    for nurse in data['nurses']:
+        for task in data['tasks']:
+            for task_instance in range(task['number_of_times']):
+                for task2 in data['tasks']:
+                    for task2_instance in range(task2['number_of_times']):
+                        if task['id'] != task2['id'] or task_instance != task2_instance:
+                            solver.Add(variables[(task['id'], task_instance, nurse['id'])] + task['duration'] <= variables[(task2['id'], task2_instance, nurse['id'])])
+ 
