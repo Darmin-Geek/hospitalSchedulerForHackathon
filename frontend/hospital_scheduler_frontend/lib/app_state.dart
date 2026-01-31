@@ -6,18 +6,21 @@ import 'package:http/http.dart' as http;
 class Nurse {
   int id;
   String name;
+  int activityType;
 
-  Nurse({required this.id, required this.name});
+  Nurse({required this.id, required this.name, required this.activityType});
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
+        'activityType': activityType,
       };
 
   factory Nurse.fromJson(Map<String, dynamic> json) {
     return Nurse(
       id: json['id'],
       name: json['name'],
+      activityType: json['activityType'] ?? 5, // Default to 5 (Other) if null for compatibility
     );
   }
 }
@@ -45,6 +48,8 @@ class Task {
   int id;
   String name;
 
+  int  activity_type;
+  int duration;
   int patient_id;
   int number_of_times;
   int minimum_separation;
@@ -54,6 +59,8 @@ class Task {
   Task({
     required this.id,
     required this.name,
+    required this.activity_type,
+    required this.duration,
     required this.patient_id,
     required this.number_of_times,
     required this.minimum_separation,
@@ -64,6 +71,8 @@ class Task {
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
+        'activity_type': activity_type,
+        'duration': duration,
         'patient_id': patient_id,
         'number_of_times': number_of_times,
         'minimum_separation': minimum_separation,
@@ -75,6 +84,8 @@ class Task {
     return Task(
       id: json['id'],
       name: json['name'],
+      activity_type: json['activityType'] ?? 5, // Default to 5 (Other)
+      duration: json['duration'] ?? 10, // Default to 10 minutes
       patient_id: json['patient_id'],
       number_of_times: json['number_of_times'],
       minimum_separation: json['minimum_separation'],
@@ -85,28 +96,21 @@ class Task {
 }
 
 class Event {
-  int patient_id;
-  int nurse_id;
   int task_id;
-  int start_time;
+  double start_time;
 
   Event(
-      {required this.patient_id,
-      required this.nurse_id,
+      {
       required this.task_id,
       required this.start_time});
 
   Map<String, dynamic> toJson() => {
-        'patient_id': patient_id,
-        'nurse_id': nurse_id,
         'task_id': task_id,
         'start_time': start_time,
       };
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
-      patient_id: json['patient_id'],
-      nurse_id: json['nurse_id'],
       task_id: json['task_id'],
       start_time: json['start_time'],
     );
@@ -152,8 +156,8 @@ class AppState {
 class AppStateCubit extends Cubit<AppState> {
   AppStateCubit() : super(AppState());
 
-  void addNurse(String name) {
-    state.nurses.add(Nurse(id: state.nurseNextId, name: name));
+  void addNurse(String name, int activityType) {
+    state.nurses.add(Nurse(id: state.nurseNextId, name: name, activityType: activityType));
     state.nurseNextId++;
     emit(state);
   }
@@ -164,11 +168,13 @@ class AppStateCubit extends Cubit<AppState> {
     emit(state);
   }
 
-  void addTask(String name, int patientId, int numberOfTimes,
+  void addTask(String name, int activityType, int duration, int patientId, int numberOfTimes,
       int minimumSeparation, int maximumSeparation, int earliestStartTime) {
     state.tasks.add(Task(
         id: state.taskNextId,
         name: name,
+        activity_type: activityType,
+        duration: duration,
         patient_id: patientId,
         number_of_times: numberOfTimes,
         minimum_separation: minimumSeparation,

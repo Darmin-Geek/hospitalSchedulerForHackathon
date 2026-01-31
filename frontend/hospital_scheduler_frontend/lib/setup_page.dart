@@ -14,6 +14,16 @@ class _SetupPageState extends State<SetupPage> {
   TextEditingController nurseNameController = TextEditingController();
   TextEditingController patientNameController = TextEditingController();
 
+  int _selectedNurseActivityType = 1;
+
+  final Map<int, String> _activityTypes = {
+    1: 'Blood pressure/pulse',
+    2: 'Medicine cart A',
+    3: 'Medicine cart B',
+    4: 'Change IV bag',
+    5: 'Other',
+  };
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AppStateCubit, AppState>(
@@ -25,15 +35,33 @@ class _SetupPageState extends State<SetupPage> {
           children: [
             Text('Nurses'),
             TextField(controller: nurseNameController),
+            DropdownButton<int>(
+              value: _selectedNurseActivityType,
+              items: _activityTypes.entries.map((entry) {
+                return DropdownMenuItem<int>(
+                  value: entry.key,
+                  child: Text(entry.value),
+                );
+              }).toList(),
+              onChanged: (int? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _selectedNurseActivityType = newValue;
+                  });
+                }
+              },
+            ),
             ElevatedButton(onPressed: () {
-              context.read<AppStateCubit>().addNurse(nurseNameController.text);
+              context.read<AppStateCubit>().addNurse(nurseNameController.text, _selectedNurseActivityType);
               setState(() {});
             }, child: Text('Add Nurse')),
             Expanded(
               child: ListView.builder(
               itemCount: state.nurses.length,
               itemBuilder: (context, index) {
-                return Card(child: Row( children: [Text(state.nurses.elementAt(index).name), IconButton(onPressed: () {
+                return Card(child: Row( children: [
+                  Text("${state.nurses.elementAt(index).name} - ${_activityTypes[state.nurses.elementAt(index).activityType]}"), 
+                  IconButton(onPressed: () {
                   context.read<AppStateCubit>().removeNurse(state.nurses.elementAt(index));
                   setState(() {});
                 }, icon: Text("X", style: TextStyle(color: Colors.red),))]));

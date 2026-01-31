@@ -1,8 +1,7 @@
 import flask
-from ortools.sat.python import cp_model
+from ortools.linear_solver import pywraplp
 
-# Time is in 20 minute intervals
-TIME_INTERVAL = 20
+TOTAL_ACTIVITY_TYPES = 5
 
 # The maximum time is 24 hours * 60 minutes/hour = 1440 minutes
 MAX_TIME = 24*60
@@ -36,6 +35,8 @@ def schedule():
     #             "name": "Check vitals",
     #             "patient_id": 1,
     #             "number_of_times": 3,
+    #             "duration": 1,
+    #             "activity_type": "1",
     #             "minimum_separation": 40,
     #             "maximum_separation": 120,
     #             "earliest_start_time": 0,
@@ -49,88 +50,81 @@ def schedule():
     #     }
     # }
 
-    model = cp_model.CpModel()
+    model = pywraplp.Solver.CreateSolver('SCIP')
 
-    # Each variable corresponds to a task instance being done by a nurse at a specific time
-    # The value of the variable is 1 if the task instance is done by the nurse at that time, and 0 otherwise
-    # The time is in minutes, starting from 12am (0)
-    # The maximum time is 24 hours * 60 minutes/hour = 1440 minutes
-    # The minimum time is 0 minutes
-    # The fourth index is the time
-    variables : dict[(int, int, int, int), cp_model.BoolVar] = {}
+    # Each variable corresponds to a task instance being completed
+    # The value of the variable is the time at which the task instance is completed
+    # The keys are (task_id, task_instance_id)
+    variables : dict[(int, int), pywraplp.NumVar] = {}
     for task in data['tasks']:
         for task_instance in range(task['number_of_times']):
-            for nurse in data['nurses']:
-                for time in range(0, MAX_TIME, TIME_INTERVAL):
-                    variables[(task['id'], task_instance, nurse['id'], time)] = model.NewBoolVar(f'x_{task["id"]}_{task_instance}_{nurse["id"]}_{time}')
-                    if(time < task['earliest_start_time']):
-                        model.Add(variables[(task['id'], task_instance, nurse['id'], time)] == 0)
+            variables[(task['id'], task_instance)] = model.NumVar(0, MAX_TIME, f'x_{task["id"]}_{task_instance}')
 
-    # Each task instance must be completed exactly once
+    debug_support_vars = []
+
+    # # Each activity type can only be done once at a time
     for task in data['tasks']:
         for task_instance in range(task['number_of_times']):
-            model.Add(sum(variables[(task['id'], task_instance, nurse['id'], time)] for nurse in data['nurses'] for time in range(0, MAX_TIME, TIME_INTERVAL)) == 1)
-
-    # Each nurse can only do one task at a time
-    for nurse in data['nurses']:
-        for time in range(0, MAX_TIME, TIME_INTERVAL):
-            model.Add(sum(variables[(task['id'], task_instance, nurse['id'], time)] for task in data['tasks'] for task_instance in range(task['number_of_times'])) <= 1)
-
-    # Keys for goal variables are the two events that are paired together so their combination can be given a weight for the objective function
-    goal_variables : dict[((int, int, int, int),(int, int, int, int)), cp_model.BoolVar] = {}
+            for task2 in data['tasks']:
+                for task2_instance in range(task2['number_of_times']):
+                    if((task['id'] != task2['id'] or task_instance != task2_instance) and (task['activity_type'] == task2['activity_type'])):
+                        support_var_z = model.IntVar(0, 1, f'z_{task["id"]}_{task_instance}_{task2["id"]}_{task2_instance}')
+                        model.Add(variables[(task['id'], task_instance)] - variables[(task2['id'], task2_instance)] >= task['duration']/2 + task2['duration']/2 - MAX_TIME * support_var_z)
+                        model.Add(variables[(task2['id'], task2_instance)] - variables[(task['id'], task_instance)] >= task['duration']/2 + task2['duration']/2 - MAX_TIME * (1-support_var_z))
+                        debug_support_vars.append(support_var_z)
     
-    #goal_variable_coefficients stores the weight for each pair of tasks for the objective function
-    goal_variable_coefficients : dict[((int, int, int, int),(int, int, int, int)), float] = {}
     
-    #Create a goal variable for each pair of tasks. The goal variable is 1 if the two task instances are performed and 0 otherwise.
+    # Each task instance must be in range of the previous task instance
+    for task in data['tasks']:
+        for task_instance in range(1, task['number_of_times']):
+            model.Add(variables[(task['id'], task_instance)] >= variables[(task['id'], task_instance-1)] + task['minimum_separation'])
+            model.Add(variables[(task['id'], task_instance)] <= variables[(task['id'], task_instance-1)] + task['maximum_separation'])
+    
+    
+    # # key is patient id, value is the negative of the time between the two closest pair of tasks for that patient
+    per_person_closest_pairs : dict[int, pywraplp.NumVar] = {}
+    
+    for patient in data['patients']:
+        per_person_closest_pairs[patient['id']] = model.NumVar(-MAX_TIME, MAX_TIME, f'per_person_closest_pairs_{patient["id"]}')
+    
     for task in data['tasks']:
         for task_instance in range(task['number_of_times']):
-            for nurse in data['nurses']:
-                for time in range(0, MAX_TIME, TIME_INTERVAL):
-                    for task2 in data['tasks']:
-                        for task2_instance in range(task2['number_of_times']):
-                            for nurse2 in data['nurses']:
-                                for time2 in range(0, MAX_TIME, TIME_INTERVAL):
-                                    if(task['id'] != task2['id'] or task_instance != task2_instance or time != time2):
-                                        goal_variables[((task['id'], task_instance, nurse['id'], time),(task2['id'], task2_instance, nurse2['id'], time2))] = model.NewBoolVar(f'g_{task["id"]}_{task_instance}_{nurse["id"]}_{time}_{task2["id"]}_{task2_instance}_{nurse2["id"]}_{time2}')
-                                        model.add_bool_and([variables[(task['id'], task_instance, nurse['id'], time)], variables[(task2['id'], task2_instance, nurse2['id'], time2)]]).only_enforce_if(goal_variables[((task['id'], task_instance, nurse['id'], time),(task2['id'], task2_instance, nurse2['id'], time2))])
-                                        
-                                        goal_variable_coefficients[((task['id'], task_instance, nurse['id'], time),(task2['id'], task2_instance, nurse2['id'], time2))] = 0
-
-
-                                        #If two task intances are back to back (or concurrent) then they should be encouraged
-                                        if(abs(time - time2) <= TIME_INTERVAL):
-                                            goal_variable_coefficients[((task['id'], task_instance, nurse['id'], time),(task2['id'], task2_instance, nurse2['id'], time2))] = 80
-                                        
-                                        #If two task instances are within two intervals of each other, then they should be encouraged, but less so
-                                        if(abs(time - time2) <= 2*TIME_INTERVAL):
-                                            goal_variable_coefficients[((task['id'], task_instance, nurse['id'], time),(task2['id'], task2_instance, nurse2['id'], time2))] = 40
-
-                                        #If the two tasks instances are for the same task, and happen too close together, then they should be incompatible
-                                        if(task['id'] == task2['id'] and task_instance != task2_instance):
-                                           if(abs(time - time2) < task['minimum_separation']):
-                                            model.Add(variables[(task['id'], task_instance, nurse['id'], time)] + variables[(task2['id'], task2_instance, nurse2['id'], time2)] <= 1)
+            for task2 in data['tasks']:
+                for task2_instance in range(task2['number_of_times']):
+                    if((task['id'] != task2['id'] or task_instance != task2_instance) and (task['patient_id'] == task2['patient_id'])):
+                        model.Add(per_person_closest_pairs[task['patient_id']] <= variables[(task['id'], task_instance)] - variables[(task2['id'], task2_instance)])
+                        model.Add(per_person_closest_pairs[task['patient_id']] <= variables[(task2['id'], task2_instance)] - variables[(task['id'], task_instance)])
     
+
+    # The objective is to minimize the time between the two closest pair of tasks for each patient
+    objectiveVariable = model.NumVar(float('-inf'), float('inf'), 'objectiveVariable')
+    model.Add(objectiveVariable == sum(value*-1 for value in per_person_closest_pairs.values()))
+    model.Minimize(objectiveVariable)
+
     print("Model set up")
 
-    model.maximize(sum(goal_variable_coefficients[((task['id'], task_instance, nurse['id'], time),(task2['id'], task2_instance, nurse2['id'], time2))] * goal_variables[((task['id'], task_instance, nurse['id'], time),(task2['id'], task2_instance, nurse2['id'], time2))] for task in data['tasks'] for task_instance in range(task['number_of_times']) for nurse in data['nurses'] for time in range(0, MAX_TIME, TIME_INTERVAL) for task2 in data['tasks'] for task2_instance in range(task2['number_of_times']) for nurse2 in data['nurses'] for time2 in range(0, MAX_TIME, TIME_INTERVAL) if (task['id'], task_instance, time) != (task2['id'], task2_instance,  time2)) \
-#    Bonus for completing task instances during the day (6am to 10pm)
-    + 10*sum(variables[(task['id'], task_instance, nurse['id'], time)] for task in data['tasks'] for task_instance in range(task['number_of_times']) for nurse in data['nurses'] for time in range(7*60, 21*60, TIME_INTERVAL)))    
-    solver = cp_model.CpSolver()
+    model.Solve()
+
     
-    status = solver.Solve(model)
-    if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:   
-        print('Solution found.')
-        print('Objective value =', solver.ObjectiveValue())
-        for task in data['tasks']:
-            for task_instance in range(task['number_of_times']):
-                for nurse in data['nurses']:
-                    for time in range(0, MAX_TIME, TIME_INTERVAL):
-                        if solver.Value(variables[(task['id'], task_instance, nurse['id'], time)]) == 1:
-                            print(f'Task {task["id"]} instance {task_instance} started by nurse {nurse["id"]} at {time} minutes')
-    else:
-        print('No solution found.')
-    return 'Hello Scheduler!'
+    for var in debug_support_vars:
+        print(var.name(), var.solution_value())
+
+    # Return the events
+    events = []
+    for task in data['tasks']:
+        for task_instance in range(task['number_of_times']):
+            events.append({
+                'task_id': task['id'],
+                'task_instance_id': task_instance,
+                'start_time': variables[(task['id'], task_instance)].solution_value()
+            })
+
+    print(events)
+    print(objectiveVariable.solution_value())
+    print(model.Objective().Value())
+    print(per_person_closest_pairs[0].solution_value())
+    
+    return events
 
 if __name__ == '__main__':
     app.run(debug=True)
