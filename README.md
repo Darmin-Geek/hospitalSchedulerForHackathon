@@ -39,11 +39,12 @@ flutter run
 ```
 
 ### File structure
+```
 backend/          # Python backend
   app.py          # Main Flask application
   requirements.txt  # Python dependencies
 hospital_scheduler_frontend/         # Flutter frontend
   lib/            # Flutter application code
   pubspec.yaml    # Flutter dependencies
-
+```
 Please note: while it is possible to run the backend on a separate machine from the frontend, the system is configured for running on a single machine. The backend is heavily optimized so it can run on a nonpowerful laptop. The original algorithm I implemented on the morning of the hackathon used 12 GB of memory but I optimized it to use less than ~50 MB of memory.
