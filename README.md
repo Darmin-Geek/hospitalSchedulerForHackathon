@@ -48,3 +48,7 @@ hospital_scheduler_frontend/         # Flutter frontend
   pubspec.yaml    # Flutter dependencies
 ```
 Please note: while it is possible to run the backend on a separate machine from the frontend, the system is configured for running on a single machine. The backend is heavily optimized so it can run on a nonpowerful laptop. The original algorithm I implemented on the morning of the hackathon used 12 GB of memory but I optimized it to use less than ~50 MB of memory.
+
+## Sources
+This paper indicates that, "Poor sleep is a pervasive problem for hospitalized patients and can contribute to adverse health outcomes."
+```Herscher, M., Mikhaylov, D., Barazani, S., Sastow, D., Yeo, I., Dunn, A. S., & Cho, H. J. (2021). A sleep hygiene intervention to improve sleep quality for hospitalized patients. The Joint Commission Journal on Quality and Patient Safety, 47(6), 343-346.```
