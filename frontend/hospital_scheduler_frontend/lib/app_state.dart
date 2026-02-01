@@ -97,21 +97,25 @@ class Task {
 
 class Event {
   int task_id;
+  int task_instance_id;
   double start_time;
 
   Event(
       {
       required this.task_id,
+      required this.task_instance_id,
       required this.start_time});
 
   Map<String, dynamic> toJson() => {
         'task_id': task_id,
+        'task_instance_id': task_instance_id,
         'start_time': start_time,
       };
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
       task_id: json['task_id'],
+      task_instance_id: json['task_instance_id'],
       start_time: json['start_time'],
     );
   }
@@ -121,7 +125,7 @@ class AppState {
   Set<Nurse> nurses = {};
   Set<Patient> patients = {};
   Set<Task> tasks = {};
-  Set<Event> events = {};
+  List<Event> events = [];
 
   int nurseNextId = 0;
   int patientNextId = 0;
@@ -145,7 +149,7 @@ class AppState {
     state.patients =
         (json['patients'] as List).map((p) => Patient.fromJson(p)).toSet();
     state.tasks = (json['tasks'] as List).map((t) => Task.fromJson(t)).toSet();
-    state.events = (json['events'] as List).map((e) => Event.fromJson(e)).toSet();
+    state.events = (json['events'] as List).map((e) => Event.fromJson(e)).toList();
     state.nurseNextId = json['nurseNextId'];
     state.patientNextId = json['patientNextId'];
     state.taskNextId = json['taskNextId'];
@@ -187,7 +191,7 @@ class AppStateCubit extends Cubit<AppState> {
 
   void getUpdatedSchedule() async {
     var response  = await http.post(Uri.parse('http://localhost:5000/schedule'), body: jsonEncode(state.toJson()), headers: {'Content-Type': 'application/json'});
-    state.events = (jsonDecode(response.body) as List).map((e) => Event.fromJson(e)).toSet();
+    state.events = (jsonDecode(response.body) as List).map((e) => Event.fromJson(e)).toList();
     emit(state);
   }
 
