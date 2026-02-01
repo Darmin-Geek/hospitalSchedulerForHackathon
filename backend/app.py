@@ -42,12 +42,6 @@ def schedule():
     #             "earliest_start_time": 0,
     #         }
     #     ],
-    #     "already_completed_tasks":{
-    #         "task_id": 1,
-    #         "task_instance_id": 1,   
-    #         "start_time": 0,
-    #         "nurse_id": 1,
-    #     }
     # }
 
     model = pywraplp.Solver.CreateSolver('SCIP')
