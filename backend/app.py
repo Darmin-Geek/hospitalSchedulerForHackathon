@@ -80,6 +80,10 @@ def schedule():
             model.Add(variables[(task['id'], task_instance)] >= variables[(task['id'], task_instance-1)] + task['minimum_separation'])
             model.Add(variables[(task['id'], task_instance)] <= variables[(task['id'], task_instance-1)] + task['maximum_separation'])
     
+    # Each task must be after its earliest start time
+    for task in data['tasks']:
+        for task_instance in range(task['number_of_times']):
+            model.Add(variables[(task['id'], task_instance)] >= task['earliest_start_time'])
     
     # # key is patient id, value is the negative of the time between the two closest pair of tasks for that patient
     per_person_closest_pairs : dict[int, pywraplp.NumVar] = {}

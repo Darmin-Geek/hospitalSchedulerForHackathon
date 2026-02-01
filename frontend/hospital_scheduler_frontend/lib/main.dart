@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hospital_scheduler_frontend/app_state.dart';
 import 'package:hospital_scheduler_frontend/schedule.dart';
+import 'package:hospital_scheduler_frontend/patient_schedule.dart';
 import 'package:hospital_scheduler_frontend/setup_page.dart';
 import 'package:hospital_scheduler_frontend/submit_tasks_page.dart';
 
@@ -21,7 +22,7 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: DefaultTabController(
-        length: 3,
+        length: 4,
         child: Scaffold(
           appBar: AppBar(
             title: Text('Hospital Scheduler'),
@@ -30,6 +31,7 @@ class _MainAppState extends State<MainApp> {
                 Tab(text: 'Setup'),
                 Tab(text: 'Submit Tasks'),
                 Tab(text: 'View Schedule'),
+                Tab(text: 'Patient Schedule'),
               ],
             ),
           ),
@@ -40,6 +42,7 @@ class _MainAppState extends State<MainApp> {
                 SetupPage(),
                 SubmitTasksPage(),
                 SchedulePage(),
+                PatientSchedulePage(),
               ]),
             ),
           ),
