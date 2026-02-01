@@ -4,7 +4,7 @@
 This project is designed to help patients at capital region hospitals such as Troy's Samaritan Hospital. When nurses do rounds, they often wake up patients. This is especially true at night when patients are trying to sleep. While nurses must check on patients, they should do so in a way that minimizes the amount of sleep patients lose.
 
 ## Solution
-This project schedules the nurses in a hospital. Its goal is to maximize pationt sleep, and thus improve patient outcomes. The scheduler's main advantage over a traditional rounds system is that it tries to align nurse schedules. Rather than a patient being woken up twice, under a schedule computed by this system, the patient would be woken up only once because both nurses enter the room at the same time.
+This project schedules the nurses in a hospital. Its goal is to maximize pationt sleep, and thus improve patient outcomes. The scheduler's main advantage over a traditional rounds system is that it tries to align nurse schedules. Rather than a patient being woken up twice in a normal system, under a schedule computed by this system the patient would be woken up only once because both nurses enter the room at the same time.
 
 This project includes a backend and a frontend. The backend is written in Python and uses Google's OR-Tools to solve the scheduling problem. The frontend is a windows application written in Flutter and provides a user interface for inputting tasks into the scheduler and viewing the solution.
 
