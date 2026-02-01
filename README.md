@@ -1,4 +1,4 @@
-# Sleep Focused Hospital Nurse Scheduler
+# Sleep Focused Hospital Scheduler
 
 ## Problem
 This project is designed to help patients at capital region hospitals such as Troy's Samaritan Hospital. When nurses do rounds, they often wake up patients. This is especially true at night when patients are trying to sleep. While nurses must check on patients, they should do so in a way that minimizes the amount of sleep patients lose.
